@@ -1,8 +1,12 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+from dotenv import load_dotenv
 
-from app.websockets.chat import ChatWebSocketHandler
+from app.routers import router
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -11,8 +15,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="GitBoss AI API")
+# Create FastAPI app
+app = FastAPI(
+    title="GitBoss AI API",
+    description="API for GitBoss AI Dashboard",
+    version="1.0.0"
+)
 
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # For development - restrict this in production
@@ -21,17 +31,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-chat_handler = ChatWebSocketHandler()
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {"status": "ok"}
-
-@app.websocket("/ws/chat")
-async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket endpoint for chat"""
-    await chat_handler.handle_connection(websocket)
+app.include_router(router)
 
 if __name__ == "__main__":
     import uvicorn
